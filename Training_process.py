@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Training
+ # Training
 
 # ## Technically, it's only a few lines of code to run on GPUs (elsewhere, ie. on Lamini).
 # ```
@@ -16,20 +13,12 @@
 # 1. Choose base model.
 # 2. Load data.
 # 3. Train it. Returns a model ID, dashboard, and playground interface.
-# 
-# ### Let's look under the hood at the core code running this! This is the open core of Lamini's `llama` library :)
-
-# In[ ]:
-
 
 import os
 import lamini
 
 lamini.api_url = os.getenv("POWERML__PRODUCTION__URL")
 lamini.api_key = os.getenv("POWERML__PRODUCTION__KEY")
-
-
-# In[ ]:
 
 
 import datasets
@@ -58,32 +47,18 @@ global_config = None
 
 
 # ### Load the Lamini docs dataset
-
-# In[ ]:
-
-
 dataset_name = "lamini_docs.jsonl"
 dataset_path = f"/content/{dataset_name}"
 use_hf = False
 
-
-# In[ ]:
-
-
+#or 2nd way to load a dataset
 dataset_path = "lamini/lamini_docs"
 use_hf = True
 
 
 # ### Set up the model, training config, and tokenizer
-
-# In[ ]:
-
-
+# a small model we chose
 model_name = "EleutherAI/pythia-70m"
-
-
-# In[ ]:
-
 
 training_config = {
     "model": {
@@ -97,10 +72,6 @@ training_config = {
     "verbose": True
 }
 
-
-# In[ ]:
-
-
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 tokenizer.pad_token = tokenizer.eos_token
 train_dataset, test_dataset = tokenize_and_split_data(training_config, tokenizer)
@@ -110,15 +81,7 @@ print(test_dataset)
 
 
 # ### Load the base model
-
-# In[ ]:
-
-
 base_model = AutoModelForCausalLM.from_pretrained(model_name)
-
-
-# In[ ]:
-
 
 device_count = torch.cuda.device_count()
 if device_count > 0:
@@ -128,18 +91,10 @@ else:
     logger.debug("Select CPU device")
     device = torch.device("cpu")
 
-
-# In[ ]:
-
-
 base_model.to(device)
 
 
 # ### Define function to carry out inference
-
-# In[ ]:
-
-
 def inference(text, model, tokenizer, max_input_tokens=1000, max_output_tokens=100):
   # Tokenize
   input_ids = tokenizer.encode(
@@ -166,10 +121,6 @@ def inference(text, model, tokenizer, max_input_tokens=1000, max_output_tokens=1
 
 
 # ### Try the base model
-
-# In[ ]:
-
-
 test_text = test_dataset[0]['question']
 print("Question input (test):", test_text)
 print(f"Correct answer from Lamini docs: {test_dataset[0]['answer']}")
@@ -178,22 +129,10 @@ print(inference(test_text, base_model, tokenizer))
 
 
 # ### Setup training
-
-# In[ ]:
-
-
 max_steps = 3
-
-
-# In[ ]:
-
 
 trained_model_name = f"lamini_docs_{max_steps}_steps"
 output_dir = trained_model_name
-
-
-# In[ ]:
-
 
 training_args = TrainingArguments(
 
@@ -234,10 +173,6 @@ training_args = TrainingArguments(
   greater_is_better=False
 )
 
-
-# In[ ]:
-
-
 model_flops = (
   base_model.floating_point_ops(
     {
@@ -253,10 +188,6 @@ print(base_model)
 print("Memory footprint", base_model.get_memory_footprint() / 1e9, "GB")
 print("Flops", model_flops / 1e9, "GFLOPs")
 
-
-# In[ ]:
-
-
 trainer = Trainer(
     model=base_model,
     model_flops=model_flops,
@@ -268,60 +199,33 @@ trainer = Trainer(
 
 
 # ### Train a few steps
-
-# In[ ]:
-
-
 training_output = trainer.train()
 
 
 # ### Save model locally
-
-# In[ ]:
-
-
 save_dir = f'{output_dir}/final'
 
 trainer.save_model(save_dir)
 print("Saved model to:", save_dir)
 
 
-# In[ ]:
-
-
 finetuned_slightly_model = AutoModelForCausalLM.from_pretrained(save_dir, local_files_only=True)
-
-
-# In[ ]:
-
 
 finetuned_slightly_model.to(device) 
 
 
 # ### Run slightly trained model
-
-# In[ ]:
-
-
 test_question = test_dataset[0]['question']
 print("Question input (test):", test_question)
 
 print("Finetuned slightly model's answer: ")
 print(inference(test_question, finetuned_slightly_model, tokenizer))
 
-
-# In[ ]:
-
-
 test_answer = test_dataset[0]['answer']
 print("Target answer output (test):", test_answer)
 
 
 # ### Run same model trained for two epochs 
-
-# In[ ]:
-
-
 finetuned_longer_model = AutoModelForCausalLM.from_pretrained("lamini/lamini_docs_finetuned")
 tokenizer = AutoTokenizer.from_pretrained("lamini/lamini_docs_finetuned")
 
@@ -331,16 +235,9 @@ print(inference(test_question, finetuned_longer_model, tokenizer))
 
 
 # ### Run much larger trained model and explore moderation
-
-# In[ ]:
-
-
 bigger_finetuned_model = BasicModelRunner(model_name_to_id["bigger_model_name"])
 bigger_finetuned_output = bigger_finetuned_model(test_question)
 print("Bigger (2.8B) finetuned model (test): ", bigger_finetuned_output)
-
-
-# In[ ]:
 
 
 count = 0
@@ -353,41 +250,22 @@ print(count)
 
 # ### Explore moderation using small model
 # First, try the non-finetuned base model:
-
-# In[ ]:
-
-
 base_tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
 base_model = AutoModelForCausalLM.from_pretrained("EleutherAI/pythia-70m")
 print(inference("What do you think of Mars?", base_model, base_tokenizer))
 
 
 # ### Now try moderation with finetuned small model 
-
-# In[ ]:
-
-
 print(inference("What do you think of Mars?", finetuned_longer_model, tokenizer))
 
 
 # ### Finetune a model in 3 lines of code using Lamini
-
-# In[ ]:
-
-
 model = BasicModelRunner("EleutherAI/pythia-410m") 
 model.load_data_from_jsonlines("lamini_docs.jsonl", input_key="question", output_key="answer")
 model.train(is_public=True) 
 
 
-# In[ ]:
-
-
 out = model.evaluate()
-
-
-# In[ ]:
-
 
 lofd = []
 for e in out['eval_results']:
@@ -400,4 +278,3 @@ df = pd.DataFrame.from_dict(lofd)
 style_df = df.style.set_properties(**{'text-align': 'left'})
 style_df = style_df.set_properties(**{"vertical-align": "text-top"})
 style_df
-
