@@ -71,6 +71,7 @@ instruct_model = BasicModelRunner("meta-llama/Llama-2-7b-chat-hf")
 instruct_output = instruct_model("Tell me how to train my dog to sit")
 print("Instruction-tuned output (Llama 2): ", instruct_output)
 
+#now lets try a 70 million paramater data that is not instruction tuned
 tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
 model = AutoModelForCausalLM.from_pretrained("EleutherAI/pythia-70m")
 
