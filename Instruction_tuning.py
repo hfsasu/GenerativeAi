@@ -62,10 +62,11 @@ dataset_path_hf = "lamini/alpaca"
 dataset_hf = load_dataset(dataset_path_hf)
 print(dataset_hf)
 
+#original LLaMA 2 model trained on a general-purpose dataset.
 non_instruct_model = BasicModelRunner("meta-llama/Llama-2-7b-hf")
 non_instruct_output = non_instruct_model("Tell me how to train my dog to sit")
 print("Not instruction-tuned output (Llama 2 Base):", non_instruct_output)
-
+#vs this is the instruction-Tuned Model (meta-llama/Llama-2-7b-chat-hf
 instruct_model = BasicModelRunner("meta-llama/Llama-2-7b-chat-hf")
 instruct_output = instruct_model("Tell me how to train my dog to sit")
 print("Instruction-tuned output (Llama 2): ", instruct_output)
