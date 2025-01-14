@@ -1,4 +1,4 @@
-mport itertools
+import itertools
 import jsonlines
 
 from datasets import load_dataset
